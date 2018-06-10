@@ -5,8 +5,11 @@
 module Render (xml, renderPodcast) where
 
 import           Control.Monad                      (forM_)
-import qualified Text.Blaze.Html5              as H
-import qualified Text.Blaze.Html5.Attributes   as A
+import qualified Data.Text                     as T
+--import qualified Text.Blaze.Html                    (textValue)
+import           Text.Blaze.RssXml                  ((!), toHtml, textValue)
+import qualified Text.Blaze.RssXml             as H
+import qualified Text.Blaze.RssXml.Attributes  as A
 import qualified Text.Blaze.Html.Renderer.Utf8 as H (renderHtml)
 import           Web.Spock                          (setHeader, lazyBytes)
 
@@ -24,10 +27,29 @@ xml content = do
 
 renderPodcast :: Podcast -> [Episode] -> H.Html
 renderPodcast podcast episodes =
-  H.docTypeHtml $ do
-    H.head $ do
-      H.title "Title"
-    H.body $ do
-      H.p . H.toHtml $ title (podcast :: Podcast)  -- TODO why do I need this cast
-      --ul $ forM_ [1 .. n] (li . toHtml)
-
+  H.docTypeHtml . H.channel $ do
+    H.title . toHtml $ title (podcast :: Podcast)  -- TODO why do I need this cast
+    H.link . toHtml $ url (podcast :: Podcast)
+    H.language "en-us"
+    H.itunesSubtitle "TODO subtitle"
+    H.itunesAuthor "TODO author"
+    H.itunesSummary . toHtml $ description (podcast :: Podcast)
+    H.itunesOwner $ do
+      H.itunesName "TODO owner"
+      H.itunesEmail "TODO owner"
+    H.itunesExplicit "no"
+    H.itunesImage ! A.href (textValue $ thumbnail (podcast :: Podcast))
+    H.itunesCategory ! A.text "TODO Category Name"
+    H.item $ forM_ episodes $ \episode -> do
+      H.title . toHtml $ title (episode :: Episode)
+      H.itunesSummary . toHtml $ description (episode :: Episode)
+      H.description . toHtml $ description (episode :: Episode)
+      H.link . toHtml $ url (episode :: Episode)
+      H.enclosure ! A.url (textValue $ url (episode :: Episode))
+                  ! A.type_ (textValue "audio/mpeg")
+		  ! A.length (textValue . T.pack . show $ Model.Episode.length (episode :: Episode))
+      H.pubdate "TODO published_date"
+      H.itunesAuthor "TODO author"
+      H.itunesDuration "TODO duration"
+      H.itunesExplicit "no"
+      H.guid . toHtml $ url (episode :: Episode)

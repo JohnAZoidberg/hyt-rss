@@ -17,12 +17,15 @@ let
           hyt-rss =
            #pkgs.haskell.lib.failOnAllWarnings
            #  (pkgs.haskell.lib.justStaticExecutables
-                (haskellPackagesNew.callPackage ./nix/hyt-rss.nix { });
+                (haskellPackagesNew.callPackage ./nix/hyt-rss.nix {
+                 # TODO why doesn't this work?
+                 #blaze-html = haskellPackagesNew.callPackage ./nix/blaze-html.nix { };
+                });
            #  );
 
-          blaze-html = haskellPackagesNew.callPackage ./nix/blaze-html.nix { };
-
-         #prettyprinter = haskellPackagesOld.prettyprinter_1_2_0_1;
+           # I don't really need the dependencies of blaze-html to rebuild
+           # based off of my fork TODO why do I have to?
+           blaze-html = haskellPackagesNew.callPackage ./nix/blaze-html.nix { };
         };
       };
     };

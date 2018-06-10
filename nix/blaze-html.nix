@@ -6,10 +6,10 @@
 mkDerivation {
   pname = "blaze-html";
   src = fetchFromGitHub {
-    owner ="jaspervdj";
+    owner = "JohnAZoidberg";
     repo = "blaze-html";
-    rev = "0f720359d7fa6baa2b8a19327dff2f20d3d652d3";
-    sha256 = "164s9sl3i13np2qwg5yr4vmh23819jgg0xyr6drsa4c84jvb76lj";
+    rev = "c1c14a7f2d1de6b5eb4e5686534ff7ef0ca10dc7";
+    sha256 = "082dii2scwp0ff6rsxqsfajsq3hrm7453a9h3ppblzcm20mgsj0s";
   };
   isLibrary = true;
   isExecutable = false;
