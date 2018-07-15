@@ -47,7 +47,7 @@ renderPodcast podcast episodes =
       H.link . toHtml $ url (episode :: Episode)
       H.enclosure ! A.url (textValue $ url (episode :: Episode))
                   ! A.type_ (textValue "audio/mpeg")
-		  ! A.length (textValue . T.pack . show $ Model.Episode.length (episode :: Episode))
+                  ! A.length (textValue . T.pack . show $ Model.Episode.length (episode :: Episode))
       H.pubdate "TODO published_date"
       H.itunesAuthor "TODO author"
       H.itunesDuration "TODO duration"

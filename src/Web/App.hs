@@ -23,6 +23,8 @@ app =
   prehook corsHeader $ do
     get "test" testAction
     get ("user" <//> var) userAction
+    --get ("channel" <//> var) channelAction
+    --get ("playlist" <//> var) playlistAction
     -- Allow for pre-flight AJAX requests
     hookAny OPTIONS $ \_ -> do
       setHeader "Access-Control-Allow-Headers" "Content-Type, Authorization"
@@ -30,8 +32,9 @@ app =
 
 userAction :: Text -> ApiAction ctx a
 userAction username = do
+    limit <- param "limit"
     (podcast, playlist) <- liftIO $ getUserPodcast username
-    episodes <- liftIO $ getPlaylistEpisodes playlist
+    episodes <- liftIO $ getPlaylistEpisodes limit playlist
     xml $ renderPodcast podcast episodes
 
 testAction :: ApiAction ctx a

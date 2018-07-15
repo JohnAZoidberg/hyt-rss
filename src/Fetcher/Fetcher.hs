@@ -1,18 +1,26 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE RecordWildCards       #-}
 
 module Fetcher.Fetcher (getUserPodcast, getPlaylistEpisodes) where
 
-import           Control.Lens              ((^?), (^.))
-import           Data.Aeson.Lens           (key, _String, nth)
+import           Control.Lens              ((^?), (^.), (^..))
+import           Control.Monad.IO.Class    (liftIO)
+import           Data.Aeson.Lens           (key, _String, nth, values)
+import           Data.Aeson                (withObject, Value(..), (.:), Object, Array, eitherDecode)
+import           Data.Aeson.Types          (parseEither, Parser)
+import           Data.Maybe                (fromMaybe)
 import           Data.Monoid               ((<>))
-import           Data.Text                 (Text, unpack)
+import           Data.Text                 (Text, unpack, pack)
 import           Data.Time.Clock.POSIX     (getCurrentTime)
 import qualified Network.Wreq         as Wreq
+import qualified Data.Vector as V
 
 import           Model.Podcast              (Podcast(..))
 import           Model.Episode                      (Episode(..))
+
+apiKey :: Text
 
 getUrl :: Text -> Text -> Text
 getUrl apiKey endpoint = "https://www.googleapis.com/youtube/v3"
@@ -21,7 +29,6 @@ getUrl apiKey endpoint = "https://www.googleapis.com/youtube/v3"
 
 getUserPodcast :: Text -> IO (Podcast, Text)
 getUserPodcast username = do
-    let apiKey = "AIzaSyC-7Dy0KgpvvAK69BtdNJr5U2mJV2aN6Ew"
     let url = getUrl apiKey $ "/channels?part=snippet%2CcontentDetails&forUsername="
                            <> username
     res <- Wreq.get $ unpack url
@@ -34,16 +41,59 @@ getUserPodcast username = do
                   , thumbnail   = res ^. snippet . key "thumbnails" . key "high" . key "url" . _String
                   , description = res ^. snippet . key "description" . _String
                   }
-    let playlistUrl = res ^. Wreq.responseBody . key "contentDetails" . key "relatedPlaylists" . key "uploads" . _String
+    let playlistUrl = res ^. channel . key "contentDetails" . key "relatedPlaylists" . key "uploads" . _String
+    liftIO . print $ res ^. Wreq.responseBody
     return (podcast, playlistUrl)
 
-getPlaylistEpisodes :: Text -> IO [Episode]
-getPlaylistEpisodes playlist = do
+parseItemList :: (Value -> Parser Episode) -> (Value -> Parser [Episode]) -- TODO put a
+parseItemList parseItem = withObject "items" $ \o -> do
+    items :: Array <- o .: "items"
+    mapM parseItem (V.toList items)
+
+parseEpisode :: Value -> Parser Episode
+parseEpisode = withObject "episode" $ \o -> do
+    snippet       <- o .: "snippet"
+    videoId       <- o .: "id"
+
+    title         <- snippet .: "title"
+    publishedDate <- snippet .: "publishedAt"
+    description   <- snippet .: "description"
+    let url        = "https://www.youtube.com/watch?v=" <> videoId
+        fileUrl    = convertUrl videoId
+        length     = 1024 -- TODO
+
+    return Episode{..}
+
+convertUrl = id  -- TODO
+
+getPlaylistEpisodes :: Maybe Int -> Text -> IO [Episode]
+getPlaylistEpisodes limit playlist = do
   now <- getCurrentTime
+  episodes <- getEpisodes playlist limit []
+  return episodes
   return [Episode { title          = ""
                   , url            = ""
                   , description    = ""
-                  , file_url       = ""
+                  , fileUrl       = ""
                   , length         = 1024
-                  , published_date = now
+                  , publishedDate = now
                   }]
+
+getEpisodes :: Text -> Maybe Int -> [Episode] -> IO [Episode]
+getEpisodes _ (Just 0) episodes = return episodes
+getEpisodes playlistId limit episodes = do
+  let maxResults = pack . show $ fromMaybe 50 limit
+      url = getUrl apiKey $ "/playlistItems"
+                         <> "?part=snippet%2CcontentDetails"
+                         <> "&maxResults=" <> maxResults
+                         <> "&playlistId=" <> playlistId
+  res <- Wreq.get $ unpack url
+  let resBody = res ^. Wreq.responseBody
+  case parseEither (parseItemList parseEpisode) =<< eitherDecode resBody of
+    Left err -> error err
+    Right episodes -> return episodes
+  --getEpisodes playlistId (limit - Prelude.length newEpisodes)
+  --        $ episodes ++ undefined
+
+-- vid['snippet']['resourceId']['videoId']
+toEpisode foo = foo

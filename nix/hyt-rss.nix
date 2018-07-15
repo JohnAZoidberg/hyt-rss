@@ -1,6 +1,6 @@
 { mkDerivation, stdenv
 , base, text, time, iso8601-time, bytestring
-, Spock, http-types, aeson , wreq, lens, lens-aeson
+, Spock, http-types, aeson , wreq, lens, lens-aeson, vector
 , blaze-html
 , dhall
 }:
@@ -12,7 +12,7 @@ mkDerivation {
   isExecutable = true;
   executableHaskellDepends = [
     base text time iso8601-time bytestring
-    Spock http-types aeson wreq lens lens-aeson
+    Spock http-types aeson wreq lens lens-aeson vector
     blaze-html
     dhall
   ];
