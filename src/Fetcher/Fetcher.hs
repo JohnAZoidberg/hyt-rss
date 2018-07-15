@@ -17,20 +17,19 @@ import           Data.Time.Clock.POSIX     (getCurrentTime)
 import qualified Network.Wreq         as Wreq
 import qualified Data.Vector as V
 
-import           Model.Podcast              (Podcast(..))
-import           Model.Episode                      (Episode(..))
-
-apiKey :: Text
+import           Model.Podcast             (Podcast(..))
+import           Model.Episode             (Episode(..))
+import           Config                    (HytCfg(..))
 
 getUrl :: Text -> Text -> Text
 getUrl apiKey endpoint = "https://www.googleapis.com/youtube/v3"
                        <> endpoint
                        <> "&key=" <> apiKey
 
-getUserPodcast :: Text -> IO (Podcast, Text)
-getUserPodcast username = do
-    let url = getUrl apiKey $ "/channels?part=snippet%2CcontentDetails&forUsername="
-                           <> username
+getUserPodcast :: HytCfg -> Text -> IO (Podcast, Text)
+getUserPodcast cfg username = do
+    let url = getUrl (apiKey cfg) $ "/channels?part=snippet%2CcontentDetails&forUsername="
+                                 <> username
     res <- Wreq.get $ unpack url
     let channel = Wreq.responseBody . key "items" . nth 0
     let snippet = channel . key "snippet"
@@ -66,10 +65,10 @@ parseEpisode = withObject "episode" $ \o -> do
 
 convertUrl = id  -- TODO
 
-getPlaylistEpisodes :: Maybe Int -> Text -> IO [Episode]
-getPlaylistEpisodes limit playlist = do
+getPlaylistEpisodes :: HytCfg -> Maybe Int -> Text -> IO [Episode]
+getPlaylistEpisodes cfg limit playlist = do
   now <- getCurrentTime
-  episodes <- getEpisodes playlist limit []
+  episodes <- getEpisodes cfg playlist limit []
   return episodes
   return [Episode { title          = ""
                   , url            = ""
@@ -79,14 +78,14 @@ getPlaylistEpisodes limit playlist = do
                   , publishedDate = now
                   }]
 
-getEpisodes :: Text -> Maybe Int -> [Episode] -> IO [Episode]
-getEpisodes _ (Just 0) episodes = return episodes
-getEpisodes playlistId limit episodes = do
+getEpisodes :: HytCfg -> Text -> Maybe Int -> [Episode] -> IO [Episode]
+getEpisodes _ _ (Just 0) episodes = return episodes
+getEpisodes cfg playlistId limit episodes = do
   let maxResults = pack . show $ fromMaybe 50 limit
-      url = getUrl apiKey $ "/playlistItems"
-                         <> "?part=snippet%2CcontentDetails"
-                         <> "&maxResults=" <> maxResults
-                         <> "&playlistId=" <> playlistId
+      url = getUrl (apiKey cfg) $ "/playlistItems"
+                               <> "?part=snippet%2CcontentDetails"
+                               <> "&maxResults=" <> maxResults
+                               <> "&playlistId=" <> playlistId
   res <- Wreq.get $ unpack url
   let resBody = res ^. Wreq.responseBody
   case parseEither (parseItemList parseEpisode) =<< eitherDecode resBody of

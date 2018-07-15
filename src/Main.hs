@@ -11,6 +11,7 @@ import           Web.Spock.Config        ( SpockCfg(..)
 
 import qualified Config
 import           Web.App                 (app, errorHandler)
+import           Model.CoreTypes         (HytState(..))
 
 main :: IO ()
 main = getArgs >>= parseArgs
@@ -31,7 +32,7 @@ parseArgs args
 runApp :: FilePath -> IO ()
 runApp cfgFile = do
   cfg <- Config.parseConfig cfgFile
-  spockCfg <- mySpockCfg () PCNoDatabase ()
+  spockCfg <- mySpockCfg () PCNoDatabase (HytState cfg)
   runSpock (fromInteger $ Config.port cfg) (spock spockCfg app)
 
 mySpockCfg :: sess -> PoolOrConn conn -> st -> IO (SpockCfg conn sess st)

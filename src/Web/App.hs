@@ -33,8 +33,9 @@ app =
 userAction :: Text -> ApiAction ctx a
 userAction username = do
     limit <- param "limit"
-    (podcast, playlist) <- liftIO $ getUserPodcast username
-    episodes <- liftIO $ getPlaylistEpisodes limit playlist
+    cfg <- hytCfg <$> getState
+    (podcast, playlist) <- liftIO $ getUserPodcast  cfg username
+    episodes <- liftIO $ getPlaylistEpisodes cfg limit playlist
     xml $ renderPodcast podcast episodes
 
 testAction :: ApiAction ctx a
