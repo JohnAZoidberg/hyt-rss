@@ -9,6 +9,7 @@ data Episode = Episode
     --TODO do podcast thumbnails, thumbnail   :: Text -- URL
     , description   :: Text
     , fileUrl       :: Text -- Url
-    , length        :: Integer
+    , len           :: Integer
     , publishedDate :: UTCTime
+    , thumbnail     :: Text -- Url
     }

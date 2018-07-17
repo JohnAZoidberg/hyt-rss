@@ -8,8 +8,8 @@ mkDerivation {
   src = fetchFromGitHub {
     owner = "JohnAZoidberg";
     repo = "blaze-html";
-    rev = "c1c14a7f2d1de6b5eb4e5686534ff7ef0ca10dc7";
-    sha256 = "082dii2scwp0ff6rsxqsfajsq3hrm7453a9h3ppblzcm20mgsj0s";
+    rev = "5714c5b8c77c548c96782d9caa8c0a9b33a0b48d";
+    sha256 = "05zjmycgk2rb33fcddi0r4rq8bz496nxxddbpc75nmf94r29y51i";
   };
   isLibrary = true;
   isExecutable = false;

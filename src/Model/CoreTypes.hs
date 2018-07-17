@@ -4,10 +4,12 @@ module Model.CoreTypes
     ( Api
     , ApiAction
     , HytState(..)
+    , ChannelIdentifier(..)
     )
 where
 
 import           Web.Spock               (SpockCtxM, SpockActionCtx)
+import           Data.Text               (Text)
 
 import           Config                  (HytCfg)
 
@@ -18,3 +20,5 @@ newtype HytState
       = HytState
       { hytCfg :: HytCfg
       }
+
+data ChannelIdentifier = Username Text | ChannelId Text
